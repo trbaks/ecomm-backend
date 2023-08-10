@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product')
 
+const { uuid } = require('uuidv4');
+const logger = require('../logger');
 // to fetch all products
 router.get('/fetchproduct', async (req, res) => {
     try {
@@ -29,8 +31,30 @@ router.post('/fetchproduct/type', async (req, res) => {
     const { userType } = req.body
     try {
         const product = await Product.find({ type: userType })
+        logger.info("Successful: Product by Type", {
+            meta: {
+              httpMethod: "GET",
+              statusCode: 200,
+              httpPath: "/product/type",
+              productType: userType,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          }); 
         res.send(product)
     } catch (error) {
+        logger.error("Error: Product by Type", {
+            meta: {
+              httpMethod: "GET",
+              statusCode: 500,
+              httpPath: "/product/type",
+              productType: userType,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          }); 
         res.status(500).send("Something went wrong")
     }
 })

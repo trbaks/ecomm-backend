@@ -6,7 +6,8 @@ const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 dotenv.config()
 
-
+const { uuid } = require('uuidv4');
+const logger = require('../logger');
 let productInfo = {};
 let userData = {};
 let userInfo;
@@ -335,9 +336,31 @@ const paymentVerification = async (req, res) => {
       const deleteCart = await Cart.deleteMany({ user: userInfo })
 
       // res.redirect(`${process.env.PAYMENT_SUCCESS}=${razorpay_payment_id} `);
+      logger.info("Payment Scuccessful", {
+        meta: {
+          httpMethod: "POST",
+          statusCode: 200,
+          httpPath: "/checkout",
+          userDetails: userInfo,
+          traceId: uuid(),
+          spanId: uuid().substring(0, 6),
+          traceFlags: "01",
+        },
+      });
       res.redirect(`${process.env.PAYMENT_SUCCESS}`);
     }
     else {
+      logger.error("Payment Scuccessful", {
+        meta: {
+          httpMethod: "POST",
+          statusCode: 500,
+          httpPath: "/checkout",
+          userDetails: userInfo,
+          traceId: uuid(),
+          spanId: uuid().substring(0, 6),
+          traceFlags: "01",
+        },
+      });
       res.status(400).json({
         success: false,
       });

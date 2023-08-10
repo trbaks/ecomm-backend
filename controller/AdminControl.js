@@ -4,6 +4,7 @@ const Wishlist = require("../models/Wishlist");
 const Review = require("../models/Review");
 const Product = require("../models/Product");
 const Payment = require("../models/Payment");
+const logger = require('../logger');
 let success = false;
 const getAllUsersInfo = async (req, res) => {
     try {
@@ -89,8 +90,30 @@ const deleteUserReview = async (req, res) => {
     const { id } = req.params;
     try {
         let deleteReview = await Review.findByIdAndDelete(id)
+        logger.info("Deleted User Review", {
+            meta: {
+              httpMethod: "DELETE",
+              statusCode: 204,
+              httpPath: "/admin/home",
+              userDetails: id,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          })
         res.send({ msg: "Review deleted successfully" })
     } catch (error) {
+        logger.error("Error Deleting User Review", {
+            meta: {
+              httpMethod: "POST",
+              statusCode: 404,
+              httpPath: "/admin/home",
+              userDetails: id,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          })
         res.status(400).send({ msg: "Something went wrong,Please try again letter", error })
     }
 }
@@ -101,8 +124,30 @@ const deleteUserCartItem = async (req, res) => {
     try {
         let deleteCart = await Cart.findByIdAndDelete(id)
         success = true
-        res.send({ success, msg: "Review deleted successfully" })
+        logger.info("Deleted Cart Item", {
+            meta: {
+              httpMethod: "DELETE",
+              statusCode: 204,
+              httpPath: "/admin/home",
+              userDetails: id,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          })
+        res.send({ success, msg: "Item deleted successfully" })
     } catch (error) {
+        logger.info("Error Deleting Cart Item", {
+            meta: {
+              httpMethod: "DELETE",
+              statusCode: 404,
+              httpPath: "/admin/home",
+              userDetails: id,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          })
         res.status(400).send({ msg: "Something went wrong,Please try again letter1" })
     }
 }
@@ -164,10 +209,30 @@ const addProduct = async (req, res) => {
     try {
         await Product.create({ name, brand, price, category, image, rating, type, author, description, gender })
         success = true
+        logger.info("Product Added Successfully", {
+            meta: {
+              httpMethod: "POST",
+              statusCode: 201,
+              httpPath: "/admin/home",
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          })
         res.send(success)
 
     } catch (error) {
         console.log(error);
+        logger.error("Error- Product addition failed", {
+            meta: {
+              httpMethod: "POST",
+              statusCode: 500,
+              httpPath: "/admin/home",
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          })
         return res.status(400).send(error)
     }
 }
@@ -179,8 +244,30 @@ const deleteProduct = async (req, res) => {
         try {
             await Product.findByIdAndDelete(id)
             success = true
+            logger.info("Deleted Product", {
+                meta: {
+                  httpMethod: "DELETE",
+                  statusCode: 200,
+                  httpPath: "/admin/home",
+                  userDetails: id,
+                  traceId: uuid(),
+                  spanId: uuid().substring(0, 6),
+                  traceFlags: "01",
+                },
+              })
             res.send(success)
         } catch (error) {
+            logger.error("Error deleting product", {
+                meta: {
+                  httpMethod: "DELETE",
+                  statusCode: 500,
+                  httpPath: "/admin/home",
+                  userDetails: id,
+                  traceId: uuid(),
+                  spanId: uuid().substring(0, 6),
+                  traceFlags: "01",
+                },
+              })
             return res.status(400).send(error)
         }
     }

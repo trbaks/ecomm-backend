@@ -9,6 +9,8 @@ const dotenv = require('dotenv');
 const { deleteAllUserData } = require('../controller/deleteUser');
 dotenv.config()
 
+const { uuid } = require('uuidv4');
+const logger = require('../logger');
 
 // create a user :post "/auth",!auth
 let success = false
@@ -34,6 +36,17 @@ router.post('/register', [
     try {
         let user = await User.findOne({ $or: [{ email: email }, { phoneNumber: phoneNumber }] });
         if (user) {
+            logger.error("Error: User already exists", {
+                meta: {
+                  httpMethod: "POST",
+                  statusCode: 500,
+                  httpPath: "/register",
+                  userDetails: email,
+                  traceId: uuid(),
+                  spanId: uuid().substring(0, 6),
+                  traceFlags: "01",
+                },
+              });
             return res.status(400).send({ error: "Sorry a user already exists" })
         }
 
@@ -57,9 +70,31 @@ router.post('/register', [
         }
         success = true
         const authToken = jwt.sign(data, process.env.JWT_SECRET)
+        logger.info("Registration Successful", {
+            meta: {
+              httpMethod: "POST",
+              statusCode: 200,
+              httpPath: "/register",
+              userDetails: email,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          });
         res.send({ success, authToken })
     }
     catch (error) {
+        logger.error("Error: Internal Server Error", {
+            meta: {
+              httpMethod: "POST",
+              statusCode: 500,
+              httpPath: "/register",
+              userDetails: email,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          });
         res.status(500).send("Internal server error")
     }
 })
@@ -81,11 +116,32 @@ router.post('/login', [
     try {
         let user = await User.findOne({ email });
         if (!user) {
-
+            logger.error("Error: User not found", {
+                meta: {
+                  httpMethod: "POST",
+                  statusCode: 404,
+                  httpPath: "/login",
+                  userDetails: email,
+                  traceId: uuid(),
+                  spanId: uuid().substring(0, 6),
+                  traceFlags: "01",
+                },
+              });
             return res.status(400).send({ success, error: "User not found" })
         }
         const passComp = await bcrypt.compare(password, user.password)
         if (!passComp) {
+            logger.error("Error: Incorrect Credentials", {
+                meta: {
+                  httpMethod: "POST",
+                  statusCode: 401,
+                  httpPath: "/login",
+                  userDetails: email,
+                  traceId: uuid(),
+                  spanId: uuid().substring(0, 6),
+                  traceFlags: "01",
+                },
+              });
             return res.status(400).send({ success, error: "Please try to login with correct credentials" })
         }
 
@@ -97,9 +153,31 @@ router.post('/login', [
 
         const authToken = jwt.sign(data, process.env.JWT_SECRET)
         success = true
+        logger.infor("Login Successful", {
+            meta: {
+              httpMethod: "POST",
+              statusCode: 200,
+              httpPath: "/login",
+              userDetails: email,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          });
         res.send({ success, authToken })
     }
     catch (error) {
+        logger.error("Error: User login failed", {
+            meta: {
+              httpMethod: "POST",
+              statusCode: 500,
+              httpPath: "/login",
+              userDetails: email,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          });
         res.status(500).send("Internal server error002")
     }
 }
@@ -131,12 +209,45 @@ router.put('/updateuser', authUser, async (req, res) => {
         if (user) {
             let updateDetails = await User.findByIdAndUpdate(req.user.id, { $set: convertData })
             success = true
+            logger.info("User Details Updated Successfully", {
+                meta: {
+                  httpMethod: "PATCH",
+                  statusCode: 200,
+                  httpPath: "/update",
+                  userDetails: user.email,
+                  traceId: uuid(),
+                  spanId: uuid().substring(0, 6),
+                  traceFlags: "01",
+                },
+              });
             res.status(200).send({ success })
         }
         else {
+            logger.error("Error: User Update Failed", {
+                meta: {
+                  httpMethod: "PATCH",
+                  statusCode: 500,
+                  httpPath: "/update",
+                  userDetails: user.email,
+                  traceId: uuid(),
+                  spanId: uuid().substring(0, 6),
+                  traceFlags: "01",
+                },
+              });
             return res.status(400).send("User Not Found")
         }
     } catch (error) {
+        logger.error("Error: User Update Failed", {
+            meta: {
+              httpMethod: "PATCH",
+              statusCode: 500,
+              httpPath: "/update",
+              userDetails: user.email,
+              traceId: uuid(),
+              spanId: uuid().substring(0, 6),
+              traceFlags: "01",
+            },
+          });
         res.send("Something went wrong")
     }
 })
